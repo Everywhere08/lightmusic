@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
 
         setupRecyclerView()
         setupControls()
+        binding.tvNowPlaying.isSelected = true
         checkPermissionAndLoad()
 
         Intent(this, MusicService::class.java).also {
