@@ -40,6 +40,13 @@ class MainActivity : AppCompatActivity() {
             musicService?.onPlayStateChanged = { playing ->
                 runOnUiThread { updatePlayButton(playing) }
             }
+            // sync UI with any existing service state
+            musicService?.let { service ->
+                if (service.currentIndex < songs.size) updateSongInfo(service.currentIndex)
+                updatePlayButton(service.isPlaying())
+                updateRepeatButton(service.repeatMode)
+                binding.btnShuffle.alpha = if (service.isShuffle) 1f else 0.4f
+            }
         }
         override fun onServiceDisconnected(name: ComponentName) {
             isBound = false
@@ -107,6 +114,16 @@ class MainActivity : AppCompatActivity() {
             binding.btnShuffle.alpha = if (service.isShuffle) 1f else 0.4f
         }
 
+        binding.btnRepeat.setOnClickListener {
+            val service = musicService ?: return@setOnClickListener
+            service.repeatMode = when (service.repeatMode) {
+                MusicService.RepeatMode.NONE -> MusicService.RepeatMode.ALL
+                MusicService.RepeatMode.ALL -> MusicService.RepeatMode.ONE
+                MusicService.RepeatMode.ONE -> MusicService.RepeatMode.NONE
+            }
+            updateRepeatButton(service.repeatMode)
+        }
+
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar, progress: Int, fromUser: Boolean) {
                 if (fromUser) musicService?.seekTo(progress)
@@ -114,6 +131,23 @@ class MainActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(sb: SeekBar) {}
             override fun onStopTrackingTouch(sb: SeekBar) {}
         })
+    }
+
+    private fun updateRepeatButton(mode: MusicService.RepeatMode) {
+        when (mode) {
+            MusicService.RepeatMode.NONE -> {
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat)
+                binding.btnRepeat.alpha = 0.4f
+            }
+            MusicService.RepeatMode.ALL -> {
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat)
+                binding.btnRepeat.alpha = 1f
+            }
+            MusicService.RepeatMode.ONE -> {
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one)
+                binding.btnRepeat.alpha = 1f
+            }
+        }
     }
 
     private fun checkPermissionAndLoad() {
